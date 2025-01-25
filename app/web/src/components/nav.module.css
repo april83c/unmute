@@ -1,0 +1,44 @@
+.nav {
+	background-color: var(--color-panel);
+	box-shadow: 0 1px var(--gray-6);
+
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 2;
+
+	user-select: none;
+
+	--nav-height: 48px;
+	--nav-padding: 8px;
+
+	max-height: var(--nav-height);
+	padding: var(--nav-padding);
+}
+
+.navItem {
+	height: calc(var(--nav-height) - (var(--nav-padding) * 2));
+}
+
+.navSection {
+}
+
+.fixButtonMargin {
+	/* when Button variant is ghost it overrides the margin to be negative. which is cringe in this specific case */
+	margin: auto; 
+}
+
+.imageButton, .imageButton:hover, .imageButton:active {
+	padding: 0 !important;
+	background: none !important;
+}
+
+.logo {
+	padding-right: 8px;
+	image-rendering: pixelated;
+}
+
+.userPartAvatar {
+	margin-right: 0.5em;
+}

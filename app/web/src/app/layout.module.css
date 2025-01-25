@@ -1,0 +1,4 @@
+.container {
+	padding: 8px;
+	padding-top: 64px; /* account for the nav which is 48px */
+}
