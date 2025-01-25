@@ -10,7 +10,7 @@
     "service/*"
   ],
   "scripts": {
-    "check": "bun run --filter * check"
+    "check": "bun run --filter=\"**\" check"
   },
   "trustedDependencies": [
     "speaker"

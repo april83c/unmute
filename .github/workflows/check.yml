@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install ALSA headers for Speaker
+        run: sudo apt-get install libasound2-dev
       - uses: oven-sh/setup-bun@v1
       - name: Install dependencies
         run: bun install
