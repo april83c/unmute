@@ -1,14 +1,15 @@
 import Elysia, { ValidationError } from "elysia";
 import kernel from "../kernel";
 import { swagger } from '@elysiajs/swagger'
-import WebKeysInput from "./WebKeysInput";
+import WebKeysInput from "./Controller/WebKeysInput";
 import { AlreadyExistsError, BadRequestError, KnownInternalServerError, NotAuthenticatedError, NotAuthorizedError, NotImplementedError, ResourceNotFoundError } from "./Error";
+import packageJson from '../../package.json';
+import Module from "./Controller/Module";
 
 const Webserver = new Elysia()
     .use(swagger({
         path: '/docs'
     }))
-    .use(WebKeysInput)
     .error({
 		[new NotImplementedError().message]: NotImplementedError,
 		[new NotAuthenticatedError().message]: NotAuthenticatedError,
@@ -21,7 +22,7 @@ const Webserver = new Elysia()
 	.onError(({ code, error }): { code: string | number } | { code: string, details: ValidationError | string } => {
 		// Log errors by severity
 		// TODO: replace this with some log storage thing
-		if (typeof code !== 'number' && ['NOT_IMPLEMENTED', 'NOT_AUTHENTICATED', 'NOT_AUTHORIZED', 'BAD_REQUEST', 'RESOURCE_NOT_FOUND', 'ALREADY_EXISTS', 'FEATURE_DISABLED'].includes(code)) {
+		if (typeof code !== 'number' && ['NOT_IMPLEMENTED', 'NOT_AUTHENTICATED', 'NOT_AUTHORIZED', 'BAD_REQUEST', 'RESOURCE_NOT_FOUND', 'ALREADY_EXISTS', 'FEATURE_DISABLED', 'VALIDATION', 'NOT_FOUND'].includes(code)) {
 			// User error
 			console.debug(error);
 		} else {
@@ -34,6 +35,8 @@ const Webserver = new Elysia()
 
 		return { code };
 	})
+    .use(WebKeysInput)
+	.use(Module)
     .get('/', () => 
         'Core is running.\n' +
         'Please see /docs for API documentation.\n' +
@@ -42,6 +45,18 @@ const Webserver = new Elysia()
         `- ${kernel.Input.length} input modules\n` +
         `- ${kernel.Output.length} output modules\n`
     )
+	.get('/status', () => {
+		return {
+			package: {
+				name: packageJson.name,
+				version: packageJson.version
+			},
+			kernel: {
+				inputs: kernel.Input.map((i) => i.id),
+				outputs: kernel.Output.map((o) => o.id)
+			}
+		};
+	})
     .listen(40000, (s) => { console.log(`Webserver is running at ${s.url}`) }); // TODO: Configurable port
 
 export default Webserver;
