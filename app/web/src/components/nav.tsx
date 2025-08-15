@@ -7,6 +7,9 @@ import styles from './nav.module.css';
 import '@radix-ui/themes/styles.css';
 import { Text, Button, Flex, Box, Container, ButtonProps, Avatar, DropdownMenu, Inset } from '@radix-ui/themes';
 
+import Cross from '@/icons/X.svg';
+
+
 function NavItem({ children }: { children: React.ReactNode }) {
 	return (
 		<Flex direction='row' align='center' width='max-content' justify='center' className={styles.navItem}>
@@ -82,7 +85,7 @@ function DefaultNav() {
 				</NavButton>
 			</NavSection>
 			<NavSection float='right'>
-                <NavButton buttonStyle={{}} onClick={undefined}><Text>April put something here</Text></NavButton>
+                <NavButton buttonStyle={{ variant: 'ghost' }} onClick={undefined}><Cross fill='currentColor' width='15px' height='15px' /></NavButton>
 			</NavSection>
 		</NavRoot>
 	);

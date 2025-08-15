@@ -1,13 +1,27 @@
-import { tts } from "edge-tts";
+import { tts, options as EdgeTTSOptions } from "edge-tts";
 import { AudioPlayer, OutputModule, Words } from "../../kernel";
 import Speaker from "speaker";
+import { Static, t } from 'elysia';
 
-export default class EdgeTTSOutput extends OutputModule {
+export const EdgeTTSOutputOptionsSchema = t.Object({
+    voice: t.Optional(t.String()),
+    volume: t.Optional(t.String()),
+    rate: t.Optional(t.String()),
+    pitch: t.Optional(t.String())
+});
+export type EdgeTTSOutputOptions = Static<typeof EdgeTTSOutputOptionsSchema>
+
+export class EdgeTTSOutput extends OutputModule {
+    static id = 'edge_tts';
+
+    static OptionsSchema = EdgeTTSOutputOptionsSchema;
+    Options: EdgeTTSOutputOptions; 
     private Player: AudioPlayer;
 
-    constructor() {
+    constructor(options: EdgeTTSOutputOptions) {
         super();
 
+        this.Options = options;
         this.Player = new Speaker({
             sampleRate: 48000,
             bitDepth: 16,
@@ -18,18 +32,8 @@ export default class EdgeTTSOutput extends OutputModule {
     Progress(text: Words) {}
 
     async Sentence(text: Words) {
-        let time = performance.now();
-        function timer(...s: string[]) {
-            console.log(`[${((performance.now() - time) / 1000).toFixed(4)}s]`, ...s);
-        }
-
-        timer('Requesting TTS...');
-        const mp3 = await tts(text);
-        console.log(mp3.byteLength);
-        timer('Got TTS data');
-
-        this.Player.once('drain', () => timer('Drained'));
-
+        const mp3 = await tts(text, this.Options);
+        
         // This took 4 seconds (fluent-ffmpeg)
         /*Ffmpeg(Readable.from(mp3))
             .inputFormat('mp3')
@@ -37,8 +41,6 @@ export default class EdgeTTSOutput extends OutputModule {
             .audioFrequency(48000)
             .outputFormat('s16le')
             .output(this.Player, { end: false })
-            .on('start', (s) => timer(s))
-            .on('progress', (p) => timer(JSON.stringify(p, undefined, 4)))
             .run();*/
         
         // This took 0.05 seconds

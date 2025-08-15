@@ -1,0 +1,14 @@
+.homeCard {
+    height: max-content;
+    padding: var(--space-4);
+}
+
+.homeCard > div {
+    width: 100%;
+}
+
+.homeCard > div > svg {
+    align-self: flex-start;
+    width: 2em;
+    height: 2em;
+}
