@@ -62,5 +62,5 @@ export type EnabledModuleInstance<T> = Extract<
 >;
 export type InactiveModuleInstance<T> = Extract<
 	ModuleInstance<T>,
-	{ Enabled: true }
+	{ Enabled: false }
 >;

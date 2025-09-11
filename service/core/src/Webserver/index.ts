@@ -13,8 +13,10 @@ import {
 } from './Error';
 import packageJson from '../../package.json';
 import Module from './Controller/Module';
+import cors from '@elysiajs/cors';
 
 const Webserver = new Elysia()
+	.use(cors()) // FIXME: get rid of this before release lol
 	.use(
 		swagger({
 			path: '/docs'
@@ -85,8 +87,8 @@ const Webserver = new Elysia()
 				version: packageJson.version
 			},
 			kernel: {
-				inputs: kernel.Input.map((i) => i.id),
-				outputs: kernel.Output.map((o) => o.id)
+				inputs: kernel.Input.map((i) => i.ModuleID),
+				outputs: kernel.Output.map((o) => o.ModuleID)
 			}
 		};
 	})

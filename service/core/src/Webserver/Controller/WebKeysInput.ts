@@ -19,7 +19,11 @@ export default new Elysia()
 	.post(
 		'/input/keys',
 		({ body }) => {
-			if (kernel.Input.find((m) => m instanceof WebKeysInput) == undefined)
+			if (
+				kernel.Input.find(
+					(m) => m.Enabled && m.Instance instanceof WebKeysInput
+				) == undefined
+			)
 				throw new FeatureDisabledError();
 
 			if ('progress' in body) {
@@ -54,7 +58,11 @@ export default new Elysia()
 		]),
 
 		open(ws) {
-			if (kernel.Input.find((m) => m instanceof WebKeysInput) == undefined) {
+			if (
+				kernel.Input.find(
+					(m) => m.Enabled && m.Instance instanceof WebKeysInput
+				) == undefined
+			) {
 				ws.close();
 				throw new FeatureDisabledError();
 			}

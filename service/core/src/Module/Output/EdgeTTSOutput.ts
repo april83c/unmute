@@ -18,7 +18,7 @@ export class EdgeTTSOutput extends OutputModule {
 	Options: EdgeTTSOutputOptions;
 	private Player: AudioPlayer;
 
-	constructor(options: EdgeTTSOutputOptions) {
+	constructor(options: EdgeTTSOutputOptions = {}) {
 		super();
 
 		this.Options = options;
