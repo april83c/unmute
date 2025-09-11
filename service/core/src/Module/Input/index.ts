@@ -1,4 +1,4 @@
-import { BaseModule } from "../../kernel";
-import { WebKeysInput } from "./WebKeysInput";
+import { BaseModule } from '../../types';
+import { WebKeysInput } from './WebKeysInput';
 
-export default [ WebKeysInput ];
+export default [WebKeysInput];

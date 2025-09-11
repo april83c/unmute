@@ -1,25 +1,25 @@
-import { Static, t } from "elysia";
-import { OutputModule, Words } from "../../kernel";
+import { Static, t } from 'elysia';
+import { OutputModule, Words } from '../../types';
 
 export const LogOutputOptionsSchema = t.Object({});
-export type LogOutputOptions = Static<typeof LogOutputOptionsSchema>
+export type LogOutputOptions = Static<typeof LogOutputOptionsSchema>;
 
 export class LogOutput extends OutputModule {
-    static id = 'log';
+	static id = 'log';
 
-    static OptionsSchema = LogOutputOptionsSchema;
-    Options: LogOutputOptions;
-    
-    constructor() {
-        super();
-        this.Options = {};
-    }
+	static OptionsSchema = LogOutputOptionsSchema;
+	Options: LogOutputOptions;
 
-    Progress(text: Words) {
-        console.log('LogOutput: Progress:', text);
-    }
+	constructor() {
+		super();
+		this.Options = {};
+	}
 
-    Sentence(text: Words) {
-        console.log('LogOutput: Sentence:', text);
-    }
+	Progress(text: Words) {
+		console.log('LogOutput: Progress:', text);
+	}
+
+	Sentence(text: Words) {
+		console.log('LogOutput: Sentence:', text);
+	}
 }

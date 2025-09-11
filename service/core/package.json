@@ -1,25 +1,26 @@
 {
-  "name": "@unmute/core",
-  "version": "1.0.0",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/main.ts",
-    "check": "tsc --noEmit",
-    "_compile": "bun build --compile --target=$TARGET --outfile out/core-$TARGET .",
-    "compile": "TARGET=bun-windows-x64 bun run _compile"
-  },
-  "dependencies": {
-    "@elysiajs/swagger": "^1.2.0",
-    "edge-tts": "^1.0.1",
-    "elysia": "^1.2.10",
-    "speaker": "^0.5.5"
-  },
-  "devDependencies": {
-    "bun-types": "latest",
-    "typescript": "^5.7.3"
-  },
-  "module": "src/main.ts",
-  "exports": {
-    ".": "./src/main.ts"
-  }
+	"name": "@unmute/core",
+	"version": "1.0.0",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "bun run --watch src/main.ts",
+		"check": "tsc --noEmit",
+		"_compile": "bun build --compile --target=$TARGET --outfile out/core-$TARGET .",
+		"compile": "TARGET=bun-windows-x64 bun run _compile"
+	},
+	"dependencies": {
+		"@elysiajs/swagger": "^1.2.0",
+		"edge-tts": "^1.0.1",
+		"elysia": "^1.2.10",
+		"speaker": "^0.5.5"
+	},
+	"devDependencies": {
+		"bun-types": "latest",
+		"prettier": "^3.6.2",
+		"typescript": "^5.7.3"
+	},
+	"module": "src/main.ts",
+	"exports": {
+		".": "./src/main.ts"
+	}
 }
