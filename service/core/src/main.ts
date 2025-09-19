@@ -45,7 +45,7 @@ const azureTTSOutput = new AzureTTSOutput({
 	style: 'default',
 	pitch: '+25%',
 	azure_region: 'westeurope',
-	azure_key: 'd7567184ce70479d8cf73f2fb67606af',
+	azure_key: process.env.AZURE_KEY ?? '',
 	device_index: 1
 });
 
