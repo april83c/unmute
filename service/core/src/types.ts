@@ -1,3 +1,4 @@
+import { PvSpeaker } from '@picovoice/pvspeaker-node';
 import { Static, t } from 'elysia';
 import { Readable, Writable } from 'node:stream';
 
@@ -23,7 +24,7 @@ export abstract class OutputModule extends BaseModule {
 	abstract Sentence(text: Words): void;
 }
 
-export abstract class AudioPlayer extends Writable {}
+export abstract class AudioPlayer extends PvSpeaker {}
 export abstract class AudioRecorder {}
 
 export type ConfigurationModule = {

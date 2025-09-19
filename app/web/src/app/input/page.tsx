@@ -17,6 +17,7 @@ import KeysInput from './keys/page';
 import { JSX, useState } from 'react';
 import type { Words } from '@unmute/core';
 import { intlFormatDistance } from 'date-fns';
+import SpeechInput from './speech/page';
 
 const WEB_MODULES: {
 	id: string;
@@ -27,6 +28,11 @@ const WEB_MODULES: {
 		id: 'web_keys',
 		friendlyName: 'Keys', // TODO: localize?
 		component: KeysInput
+	},
+	{
+		id: 'web_speech',
+		friendlyName: 'Speech',
+		component: SpeechInput
 	}
 ];
 

@@ -1,6 +1,6 @@
 import { tts, options as EdgeTTSOptions } from 'edge-tts';
 import { AudioPlayer, OutputModule, Words } from '../../types';
-import Speaker from 'speaker';
+//import Speaker from 'speaker';
 import { Static, t } from 'elysia';
 
 export const EdgeTTSOutputOptionsSchema = t.Object({
@@ -16,8 +16,15 @@ export class EdgeTTSOutput extends OutputModule {
 
 	static OptionsSchema = EdgeTTSOutputOptionsSchema;
 	Options: EdgeTTSOutputOptions;
-	private Player: AudioPlayer;
+	//private Player: AudioPlayer;
+	constructor(options: EdgeTTSOutputOptions = {}) {
+		super();
 
+		this.Options = options;
+	}
+	Progress(text: Words) {}
+	Sentence(text: Words) {}
+	/*
 	constructor(options: EdgeTTSOutputOptions = {}) {
 		super();
 
@@ -26,6 +33,8 @@ export class EdgeTTSOutput extends OutputModule {
 			sampleRate: 48000,
 			bitDepth: 16,
 			channels: 2
+			// @ts-expect-error: for some reason this isn't in speaker's typings
+			//device: 'Blackhole 2ch'
 		});
 	}
 
@@ -33,6 +42,8 @@ export class EdgeTTSOutput extends OutputModule {
 
 	async Sentence(text: Words) {
 		const mp3 = await tts(text, this.Options);
+		console.log('got mp3');
+		console.log(mp3);
 
 		// This took 4 seconds (fluent-ffmpeg)
 		/*Ffmpeg(Readable.from(mp3))
@@ -42,7 +53,7 @@ export class EdgeTTSOutput extends OutputModule {
             .outputFormat('s16le')
             .output(this.Player, { end: false })
             .run();*/
-
+	/*
 		// This took 0.05 seconds
 		const ffmpeg = Bun.spawn(
 			[
@@ -72,4 +83,5 @@ export class EdgeTTSOutput extends OutputModule {
 			this.Player.write(chunk);
 		}
 	}
+*/
 }

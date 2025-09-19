@@ -93,6 +93,7 @@ export default function KeysInput({
 								onChange={(e) => {
 									setInputContent(e.target.value);
 								}}
+								disabled={socket == undefined}
 							>
 								<TextField.Slot side="right">
 									<IconButton variant="ghost" formAction="submit">
