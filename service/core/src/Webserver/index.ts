@@ -2,6 +2,7 @@ import Elysia, { ValidationError } from 'elysia';
 import kernel from '../kernel';
 import { swagger } from '@elysiajs/swagger';
 import WebKeysInput from './Controller/WebKeysInput';
+import Output from './Controller/Output';
 import {
 	AlreadyExistsError,
 	BadRequestError,
@@ -69,6 +70,7 @@ const Webserver = new Elysia()
 		}
 	)
 	.use(WebKeysInput)
+	.use(Output)
 	.use(Module)
 	.get(
 		'/',

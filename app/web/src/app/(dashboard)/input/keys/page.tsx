@@ -26,45 +26,49 @@ export default function KeysInput({
 	onHistory?: (words: Words) => void;
 }) {
 	const [inputContent, setInputContent] = useState<string>('');
-	const [socket, setSocket] =
-		useState<ReturnType<typeof core.input.keys.socket.subscribe>>();
+	const _thingForTypes = core.input({ module: 'keys' })({ id: '' }).socket
+		.subscribe;
+	const [socket, setSocket] = useState<ReturnType<typeof _thingForTypes>>();
 
-	const webKeysModule = useQuery({
+	const activeModules = useQuery({
 		queryKey: ['module', 'active'],
 		queryFn: async () => await core.module.active.get()
 	});
 
 	useEffect(() => {
-		if (
-			webKeysModule.status == 'success'
-			&& webKeysModule.data.data.input.find(
+		if (activeModules.status == 'success') {
+			const module = activeModules.data.data.input.find(
 				(i: any) => i.moduleId == 'web_keys'
-			)
-		) {
-			const socket = core.input.keys.socket.subscribe();
+			);
 
-			socket.on('open', () => {
-				setSocket(socket);
-			});
+			if (module) {
+				const socket = core
+					.input({ module: 'keys' })({ id: module.instanceId ?? '' })
+					.socket.subscribe();
 
-			socket.on('close', () => {
-				setSocket(undefined);
-			});
+				socket.on('open', () => {
+					setSocket(socket);
+				});
 
-			socket.on('message', (message) => {
-				switch (message.data) {
-					case -1:
-						socket.send(-1);
-					default:
-						console.log('Unknown socket message received:', message.data);
-				}
-			});
+				socket.on('close', () => {
+					setSocket(undefined);
+				});
 
-			return () => {
-				socket?.close();
-			};
+				socket.on('message', (message) => {
+					switch (message.data) {
+						case -1:
+							socket.send(-1);
+						default:
+							console.log('Unknown socket message received:', message.data);
+					}
+				});
+
+				return () => {
+					socket?.close();
+				};
+			}
 		}
-	}, [webKeysModule.status, webKeysModule.data]);
+	}, [activeModules.status, activeModules.data]);
 
 	useEffect(() => {
 		if (socket != undefined) {
@@ -72,9 +76,9 @@ export default function KeysInput({
 		}
 	}, [inputContent, socket]);
 
-	switch (webKeysModule.status) {
+	switch (activeModules.status) {
 		case 'success':
-			if (webKeysModule.data.data != null) {
+			if (activeModules.data.data != null) {
 				return (
 					<>
 						<Form
@@ -83,7 +87,8 @@ export default function KeysInput({
 								e.preventDefault();
 								if (socket != undefined) {
 									socket.send({ sentence: inputContent });
-									if (onHistory != undefined) onHistory(inputContent);
+									if (onHistory != undefined)
+										onHistory({ text: inputContent, redacted: false });
 									e.currentTarget.reset();
 								}
 							}}
@@ -105,18 +110,18 @@ export default function KeysInput({
 					</>
 				);
 			} else {
-				switch ((webKeysModule.data.error.value as any).code) {
+				switch ((activeModules.data.error.value as any).code) {
 					case 'RESOURCE_NOT_FOUND':
 						// TODO: better
 						return <Text>Module not active...</Text>;
 					default:
-						throw webKeysModule.data.error.value;
+						throw activeModules.data.error.value;
 				}
 			}
 		case 'pending':
 			// TODO: Skeleton
 			return <Spinner />;
 		case 'error':
-			throw webKeysModule.error;
+			throw activeModules.error;
 	}
 }

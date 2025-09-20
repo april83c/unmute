@@ -1,5 +1,5 @@
 import { tts, options as EdgeTTSOptions } from 'edge-tts';
-import { AudioPlayer, OutputModule, Words } from '../../types';
+import { AudioPlayer, BaseModule, OutputModule, Words } from '../../types';
 //import Speaker from 'speaker';
 import { Static, t } from 'elysia';
 
@@ -11,7 +11,7 @@ export const EdgeTTSOutputOptionsSchema = t.Object({
 });
 export type EdgeTTSOutputOptions = Static<typeof EdgeTTSOutputOptionsSchema>;
 
-export class EdgeTTSOutput extends OutputModule {
+export class EdgeTTSOutput extends BaseModule implements OutputModule {
 	static id = 'edge_tts';
 
 	static OptionsSchema = EdgeTTSOutputOptionsSchema;

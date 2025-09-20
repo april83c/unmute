@@ -2,9 +2,15 @@ import { PvSpeaker } from '@picovoice/pvspeaker-node';
 import { Static, t } from 'elysia';
 import { Readable, Writable } from 'node:stream';
 
-export type Words = string;
+export type Words = { text: string; redacted: boolean };
 
 export type BaseOptionsSchema = ReturnType<typeof t.Object>;
+export const InputModuleBaseOptionsSchemaTypebox = t.Object({
+	target: t.Union([t.Array(t.String({ format: 'uuid' })), t.Literal('all')])
+});
+export type InputModuleBaseOptionsSchema =
+	typeof InputModuleBaseOptionsSchemaTypebox;
+
 export abstract class BaseModule {
 	static id: string = 'unknown';
 	get id() {
@@ -17,11 +23,13 @@ export abstract class BaseModule {
 	abstract Options: Static<BaseOptionsSchema>; // FIXME: this is wrong but whatever
 }
 
-export abstract class InputModule extends BaseModule {}
+export interface InputModule extends BaseModule {
+	Options: Static<typeof InputModuleBaseOptionsSchemaTypebox>;
+}
 
-export abstract class OutputModule extends BaseModule {
-	abstract Progress(text: Words): void;
-	abstract Sentence(text: Words): void;
+export interface OutputModule extends BaseModule {
+	Progress(text: Words): void;
+	Sentence(text: Words): void;
 }
 
 export abstract class AudioPlayer extends PvSpeaker {}

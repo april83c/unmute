@@ -29,8 +29,10 @@ export default function SpeechInput({
 	onHistory?: (words: Words) => void;
 }) {
 	const [inputContent, setInputContent] = useState<string>('');
-	const [socket, setSocket] =
-		useState<ReturnType<typeof core.input.keys.socket.subscribe>>();
+
+	const _thingForTypes = core.input({ module: 'speech' })({ id: '' }).socket
+		.subscribe;
+	const [socket, setSocket] = useState<ReturnType<typeof _thingForTypes>>();
 
 	const [speechRecognitionIsActive, _setSpeechRecognitionIsActive] =
 		useState<boolean>(false);
@@ -51,41 +53,43 @@ export default function SpeechInput({
 		isMicrophoneAvailable
 	} = useSpeechRecognition();
 
-	// TODO: replace socket with speech socket and check for speech module
 	const activeModules = useQuery({
 		queryKey: ['module', 'active'],
 		queryFn: async () => await core.module.active.get()
 	});
 
 	useEffect(() => {
-		if (
-			activeModules.status == 'success'
-			&& activeModules.data.data.input.find(
+		if (activeModules.status == 'success') {
+			const module = activeModules.data.data.input.find(
 				(i: any) => i.moduleId == 'web_speech'
-			)
-		) {
-			const socket = core.input.keys.socket.subscribe();
+			);
 
-			socket.on('open', () => {
-				setSocket(socket);
-			});
+			if (module) {
+				const socket = core
+					.input({ module: 'speech' })({ id: module.instanceId ?? '' })
+					.socket.subscribe();
 
-			socket.on('close', () => {
-				setSocket(undefined);
-			});
+				socket.on('open', () => {
+					setSocket(socket);
+				});
 
-			socket.on('message', (message) => {
-				switch (message.data) {
-					case -1:
-						socket.send(-1);
-					default:
-						console.log('Unknown socket message received:', message.data);
-				}
-			});
+				socket.on('close', () => {
+					setSocket(undefined);
+				});
 
-			return () => {
-				socket?.close();
-			};
+				socket.on('message', (message) => {
+					switch (message.data) {
+						case -1:
+							socket.send(-1);
+						default:
+							console.log('Unknown socket message received:', message.data);
+					}
+				});
+
+				return () => {
+					socket?.close();
+				};
+			}
 		}
 	}, [activeModules.status, activeModules.data]);
 
@@ -99,7 +103,7 @@ export default function SpeechInput({
 
 		if (!listening) {
 			socket.send({ sentence: transcript });
-			if (onHistory) onHistory(transcript);
+			if (onHistory) onHistory({ text: transcript, redacted: false });
 			resetTranscript();
 			SpeechRecognition.startListening();
 		} else {

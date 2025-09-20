@@ -8,7 +8,8 @@ import {
 	EnabledModuleInstance,
 	OutputModule,
 	Configuration,
-	CONFIGURATION_VERSION
+	CONFIGURATION_VERSION,
+	Words
 } from './types';
 
 export class Kernel {
@@ -22,11 +23,23 @@ export class Kernel {
 		return this.Output.filter((o) => o.Enabled);
 	}
 
-	Progress: OutputModule['Progress'] = (text) => {
-		this.EnabledOutput.forEach((o) => o.Instance.Progress(text));
+	Progress = (text: Words, target: string[] | 'all') => {
+		const targetModules =
+			target == 'all'
+				? this.EnabledOutput
+				: this.EnabledOutput.filter((o) =>
+						(target as string[]).includes(o.InstanceID)
+					);
+		targetModules.forEach((o) => o.Instance.Progress(text));
 	};
-	Sentence: OutputModule['Sentence'] = (text) => {
-		this.EnabledOutput.forEach((o) => o.Instance.Sentence(text));
+	Sentence = (text: Words, target: string[] | 'all') => {
+		const targetModules =
+			target == 'all'
+				? this.EnabledOutput
+				: this.EnabledOutput.filter((o) =>
+						(target as string[]).includes(o.InstanceID)
+					);
+		targetModules.forEach((o) => o.Instance.Sentence(text));
 	};
 
 	asConfiguration(): Configuration {
@@ -70,7 +83,9 @@ export class Kernel {
 
 			if (i.Enabled) {
 				const instance = new module();
-				instance.Options = i.Options as (typeof module)['OptionsSchema'];
+				instance.Options = i.Options as Static<
+					(typeof module)['OptionsSchema']
+				>;
 
 				return {
 					InstanceID: i.InstanceID,

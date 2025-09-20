@@ -1,8 +1,6 @@
-import * as Speech from 'microsoft-cognitiveservices-speech-sdk';
-import { AudioPlayer, OutputModule, Words } from '../../types';
+import { BaseModule, OutputModule, Words } from '../../types';
 import { Static, t } from 'elysia';
-import type { PvSpeaker as PvSpeakerType } from '@picovoice/pvspeaker-node/dist/types/index';
-import { PvSpeaker } from '@picovoice/pvspeaker-node';
+import { WorkerToMainMessage } from './AzureTTSOutputWorkerTypes';
 
 export const AzureTTSOutputOptionsSchema = t.Object({
 	style: t.String(),
@@ -10,19 +8,24 @@ export const AzureTTSOutputOptionsSchema = t.Object({
 	pitch: t.Optional(t.String()),
 	azure_key: t.String(),
 	azure_region: t.String(),
-	device_index: t.Number()
+	device_index: t.Number(),
+	replacements: t.Array(
+		t.Object({
+			original: t.String(),
+			replacement: t.String()
+		})
+	)
 });
 export type AzureTTSOutputOptions = Static<typeof AzureTTSOutputOptionsSchema>;
 
-export class AzureTTSOutput extends OutputModule {
+export class AzureTTSOutput extends BaseModule implements OutputModule {
 	static id = 'azure_tts';
 
 	static OptionsSchema = AzureTTSOutputOptionsSchema;
 	Options: AzureTTSOutputOptions;
 	private _Options: AzureTTSOutputOptions;
-	private Player: AudioPlayer;
 
-	private Synthesizer: Speech.SpeechSynthesizer;
+	private Worker: Worker;
 
 	constructor(
 		options: AzureTTSOutputOptions = {
@@ -30,7 +33,8 @@ export class AzureTTSOutput extends OutputModule {
 			voice: 'en-US-JennyNeural',
 			azure_key: '',
 			azure_region: '',
-			device_index: 0
+			device_index: 0,
+			replacements: []
 		}
 	) {
 		super();
@@ -39,64 +43,79 @@ export class AzureTTSOutput extends OutputModule {
 
 		this.Options = new Proxy(this._Options, {
 			set: (obj, prop, value) => {
-				// @ts-expect-error: idgaf
+				// @ts-expect-error: idc
 				obj[prop] = value;
 
-				this.Synthesizer = this.MakeSynthesizer();
-				this.Player = this.MakePlayer();
+				this.Worker.postMessage({
+					type: 'InitializeSynthesizer',
+					azureKey: this.Options.azure_key,
+					azureRegion: this.Options.azure_region
+				});
+
+				this.Worker.postMessage({
+					type: 'InitializePlayer',
+					deviceIndex: this.Options.device_index
+				});
 
 				return true;
 			}
 		});
 
-		this.Synthesizer = this.MakeSynthesizer();
-		this.Player = this.MakePlayer();
-	}
-
-	MakeSynthesizer() {
-		// Set up Azure TTS
-		let audioConfig = null;
-		let speechConfig = Speech.SpeechConfig.fromSubscription(
-			this.Options.azure_key,
-			this.Options.azure_region
-		);
-		speechConfig.speechSynthesisOutputFormat =
-			Speech.SpeechSynthesisOutputFormat.Raw48Khz16BitMonoPcm;
-		return new Speech.SpeechSynthesizer(speechConfig, audioConfig);
-	}
-
-	MakePlayer() {
-		console.log(PvSpeaker.getAvailableDevices());
-
-		const player = new PvSpeaker(48000, 16, {
-			deviceIndex: this.Options.device_index
+		this.Worker = new Worker('./AzureTTSOutputWorker.ts');
+		this.Worker.addEventListener('close', (event) => {
+			console.log('worker is being closed');
 		});
 
-		player.start();
+		this.Worker.onmessage = (ev: MessageEvent<WorkerToMainMessage>) => {
+			switch (ev.data.type) {
+				case 'ready': {
+					console.log('AzureTTSOutput: got Ready from worker');
+					this.Worker.postMessage({
+						type: 'InitializeSynthesizer',
+						azureKey: this.Options.azure_key,
+						azureRegion: this.Options.azure_region
+					});
 
-		return player;
+					this.Worker.postMessage({
+						type: 'InitializePlayer',
+						deviceIndex: this.Options.device_index
+					});
+					break;
+				}
+				default: {
+					console.log(
+						'AzureTTSOutput: Unknown message received from worker:',
+						ev.data
+					);
+				}
+			}
+		};
+
+		this.Worker.postMessage({ type: 'Hello' });
 	}
 
 	Progress(text: Words) {}
 
-	async Sentence(text: Words) {
-		const ssml = `<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="${this.Options.voice}">${this.Options.style != 'default' ? `<mstts:express-as style="${this.Options.style}">` : ''}${this.Options.pitch ? `<prosody pitch="${this.Options.pitch}">` : ''}${text}${this.Options.pitch ? `</prosody>` : ''}${this.Options.style != 'default' ? `</mstts:express-as>` : ''}</voice></speak>`;
-		console.log(ssml);
+	private ApplyReplacements(text: string) {
+		let newText = text;
+		this.Options.replacements.forEach((replacement) => {
+			// Escape special characters in the original word
+			const esc = replacement.original.replace(
+				/[-\/\\^$*+?.()|[\]{}]/g,
+				'\\$&'
+			);
+			// Modify the regex to include optional punctuation after the word
+			const regex = new RegExp(`${esc}(?=[.,!?\\s]|$)`, 'ig');
 
-		this.Synthesizer.speakSsmlAsync(
-			ssml,
-			(result: Speech.SpeechSynthesisResult) => {
-				if (result.reason == Speech.ResultReason.SynthesizingAudioCompleted) {
-					//this.Player.cork(); // we cork and uncork so that it doesn't do that bug where it cuts off the last part (although the bug could be actually caused by airpods)
-					this.Player.flush(result.audioData);
-					//this.Player.write(Buffer.alloc(32000)); // putting some silence in just in case
-					//this.Player.uncork();
-				} else {
-					console.error(
-						'Something went wrong with speech synthesis: ' + result.errorDetails
-					);
-				}
-			}
-		);
+			newText = newText.replaceAll(regex, replacement.replacement);
+		});
+		return newText;
+	}
+
+	async Sentence(text: Words) {
+		const ssml = `<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="${this.Options.voice}">${this.Options.style != 'default' ? `<mstts:express-as style="${this.Options.style}">` : ''}${this.Options.pitch ? `<prosody pitch="${this.Options.pitch}">` : ''}${text.redacted ? 'Redacted.' : this.ApplyReplacements(text.text.replaceAll('.', ','))}${this.Options.pitch ? `</prosody>` : ''}${this.Options.style != 'default' ? `</mstts:express-as>` : ''}</voice></speak>`;
+		//console.log(ssml);
+
+		this.Worker.postMessage({ type: 'SpeakSsmlToPlayer', ssml });
 	}
 }

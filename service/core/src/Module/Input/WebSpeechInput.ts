@@ -1,18 +1,25 @@
 import { Static, t } from 'elysia';
-import { InputModule } from '../../types';
+import {
+	BaseModule,
+	InputModule,
+	InputModuleBaseOptionsSchemaTypebox
+} from '../../types';
 
 // Logic for this Input Module is in the Webserver
 // The Input Module class for this is just used for configuration
-export const WebSpeechInputOptionsSchema = t.Object({});
+export const WebSpeechInputOptionsSchema = t.Composite([
+	t.Object({}),
+	InputModuleBaseOptionsSchemaTypebox
+]);
 export type WebSpeechInputOptions = Static<typeof WebSpeechInputOptionsSchema>;
 
-export class WebSpeechInput extends InputModule {
+export class WebSpeechInput extends BaseModule implements InputModule {
 	static id = 'web_speech';
 	static OptionsSchema = WebSpeechInputOptionsSchema;
 	Options: WebSpeechInputOptions;
 
-	constructor() {
+	constructor(options?: WebSpeechInputOptions) {
 		super();
-		this.Options = {};
+		this.Options = options ?? { target: 'all' };
 	}
 }

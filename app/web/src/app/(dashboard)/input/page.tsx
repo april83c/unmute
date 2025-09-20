@@ -108,7 +108,9 @@ export default function InputIndex() {
 									<Text size="2" color="gray">
 										{TIME_FORMAT.format(w.ts)}
 									</Text>
-									<Card>{w.words}</Card>
+									<Card>
+										{w.words.redacted ? '[ redacted ]' : w.words.text}
+									</Card>
 								</Flex>
 							))}
 						</Flex>

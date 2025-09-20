@@ -13,6 +13,8 @@
     "check": "bun run --filter=\"**\" check"
   },
   "trustedDependencies": [
-    "speaker"
+    "@jannchie/uiohook-napi",
+    "speaker",
+    "uiohook-napi"
   ]
 }

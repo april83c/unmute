@@ -2,7 +2,7 @@ import { treaty } from '@elysiajs/eden';
 import type { Webserver } from '@unmute/core';
 
 // TODO: figure out how finding core's URL will work
-export default treaty<Webserver>('http://aprils-macbook-pro:40000', {
+export default treaty<Webserver>('http://aprils-macbook-pro.local:40000', {
 	// headers: [() => ({ authorization: `Bearer ${localStorage.getItem('token')}` })],
 	onResponse: async (res) => {
 		if (!res.ok) {
