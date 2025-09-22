@@ -10,7 +10,13 @@ export const LegacyAzureTTSOutputOptionsSchema = t.Object({
 	pitch: t.Optional(t.String()),
 	azure_key: t.String(),
 	azure_region: t.String(),
-	device_index: t.Number()
+	device_index: t.Number(),
+	replacements: t.Array(
+		t.Object({
+			original: t.String(),
+			replacement: t.String()
+		})
+	)
 });
 export type LegacyAzureTTSOutputOptions = Static<
 	typeof LegacyAzureTTSOutputOptionsSchema
@@ -32,7 +38,8 @@ export class LegacyAzureTTSOutput extends BaseModule implements OutputModule {
 			voice: 'en-US-JennyNeural',
 			azure_key: '',
 			azure_region: '',
-			device_index: 0
+			device_index: 0,
+			replacements: []
 		}
 	) {
 		super();
@@ -81,9 +88,24 @@ export class LegacyAzureTTSOutput extends BaseModule implements OutputModule {
 
 	Progress(text: Words) {}
 
+	private ApplyReplacements(text: string) {
+		let newText = text;
+		this.Options.replacements.forEach((replacement) => {
+			// Escape special characters in the original word
+			const esc = replacement.original.replace(
+				/[-\/\\^$*+?.()|[\]{}]/g,
+				'\\$&'
+			);
+			// Modify the regex to include optional punctuation after the word
+			const regex = new RegExp(`${esc}(?=[.,!?\\s]|$)`, 'ig');
+
+			newText = newText.replaceAll(regex, replacement.replacement);
+		});
+		return newText;
+	}
+
 	async Sentence(text: Words) {
-		const ssml = `<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="${this.Options.voice}">${this.Options.style != 'default' ? `<mstts:express-as style="${this.Options.style}">` : ''}${this.Options.pitch ? `<prosody pitch="${this.Options.pitch}">` : ''}${text}${this.Options.pitch ? `</prosody>` : ''}${this.Options.style != 'default' ? `</mstts:express-as>` : ''}</voice></speak>`;
-		console.log(ssml);
+		const ssml = `<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="${this.Options.voice}">${this.Options.style != 'default' ? `<mstts:express-as style="${this.Options.style}">` : ''}${this.Options.pitch ? `<prosody pitch="${this.Options.pitch}">` : ''}${text.redacted ? 'Redacted.' : this.ApplyReplacements(text.text.replaceAll('.', ','))}${this.Options.pitch ? `</prosody>` : ''}${this.Options.style != 'default' ? `</mstts:express-as>` : ''}</voice></speak>`;
 
 		this.Synthesizer.speakSsmlAsync(
 			ssml,

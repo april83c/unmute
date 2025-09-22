@@ -4,6 +4,7 @@ import { WebKeysInput } from './Module/Input/WebKeysInput';
 import { WebSpeechInput } from './Module/Input/WebSpeechInput';
 import { AzureTTSOutput } from './Module/Output/AzureTTSOutput';
 import { EdgeTTSOutput } from './Module/Output/EdgeTTSOutput';
+import { LegacyAzureTTSOutput } from './Module/Output/LegacyAzureTTSOutput';
 import { LogOutput } from './Module/Output/LogOutput';
 import { WebSubtitleOutput } from './Module/Output/WebSubtitleOutput';
 import { BaseModule, EnabledModuleInstance, OutputModule } from './types';
@@ -28,7 +29,7 @@ kernel.Output.push({
 });
 */
 
-const azureTTSOutputInstance = new AzureTTSOutput({
+const azureTTSOutputInstance = new LegacyAzureTTSOutput({
 	voice: 'en-US-AshleyNeural',
 	style: 'default',
 	pitch: '+25%',
