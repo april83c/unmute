@@ -61,7 +61,9 @@ export class AzureTTSOutput extends BaseModule implements OutputModule {
 			}
 		});
 
-		this.Worker = new Worker('./AzureTTSOutputWorker.ts');
+		this.Worker = new Worker('./AzureTTSOutputWorker.ts', {
+			ref: true
+		});
 		this.Worker.addEventListener('close', (event) => {
 			console.log('worker is being closed');
 		});
