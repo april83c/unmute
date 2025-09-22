@@ -97,7 +97,7 @@ export class LegacyAzureTTSOutput extends BaseModule implements OutputModule {
 				'\\$&'
 			);
 			// Modify the regex to include optional punctuation after the word
-			const regex = new RegExp(`${esc}(?=[.,!?\\s]|$)`, 'ig');
+			const regex = new RegExp(`\\b${esc}(?=[.,!?\\s]|$)`, 'ig');
 
 			newText = newText.replaceAll(regex, replacement.replacement);
 		});

@@ -1,11 +1,11 @@
 .redacted {
-	color: black;
-	background-color: black;
+	color: transparent;
+	background-color: rgba(0, 0, 0, 0.35);
+	border-radius: 8px;
 }
 
 .unredacted {
 	color: white;
-	background: transparent;
 	text-shadow:
 		rgb(0, 0, 0) 5px 0px 0px,
 		rgb(0, 0, 0) 4.90033px 0.993347px 0px,
@@ -39,4 +39,17 @@
 		rgb(0, 0, 0) 4.4276px -2.32301px 0px,
 		rgb(0, 0, 0) 4.80085px -1.39708px 0px,
 		rgb(0, 0, 0) 4.98271px -0.415447px 0px;
+}
+
+.container {
+	padding: 0;
+	margin: 0;
+	display: inline;
+	text-align: center;
+	line-height: 1.3;
+}
+
+.container > span {
+	font-size: 72px;
+	word-break: break-word;
 }

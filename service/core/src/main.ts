@@ -29,7 +29,7 @@ kernel.Output.push({
 });
 */
 
-const azureTTSOutputInstance = new LegacyAzureTTSOutput({
+const azureTTSOutputInstance = new AzureTTSOutput({
 	voice: 'en-US-AshleyNeural',
 	style: 'default',
 	pitch: '+25%',

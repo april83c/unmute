@@ -6,11 +6,8 @@ body {
 	background: transparent;
 	padding: 0;
 	margin: 0;
-	display: inline;
-	text-align: center;
-	vertical-align: center;
-}
-
-body > span {
-	font-size: 72px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-items: stretch;
 }

@@ -84,7 +84,7 @@ export default function SubtitleOutput({}: {}) {
 					: styles.unredacted;
 
 				return (
-					<>
+					<div className={styles.container}>
 						{text.split(' ').flatMap((word, index) => [
 							<span key={index.toString()} className={className}>
 								{word}
@@ -96,7 +96,7 @@ export default function SubtitleOutput({}: {}) {
 								{' '}
 							</span>
 						])}
-					</>
+					</div>
 				);
 			} else {
 				switch ((activeModules.data.error.value as any).code) {
