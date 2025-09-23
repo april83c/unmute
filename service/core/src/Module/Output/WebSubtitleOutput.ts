@@ -4,7 +4,10 @@ import { BaseModule, OutputModule, Words } from '../../types';
 export const WebSubtitleOptionsSchema = t.Object({});
 export type WebSubtitleOptions = Static<typeof WebSubtitleOptionsSchema>;
 
-type Subscriber = (words: Words) => void;
+type Subscriber = (data: {
+	words: Words;
+	type: 'progress' | 'sentence';
+}) => void;
 
 export class WebSubtitleOutput extends BaseModule implements OutputModule {
 	static id = 'web_subtitle';
@@ -24,11 +27,11 @@ export class WebSubtitleOutput extends BaseModule implements OutputModule {
 		this.Subscribed = [];
 	}
 
-	Progress(text: Words) {
-		this.Subscribed.forEach((s) => s(text));
+	Progress(words: Words) {
+		this.Subscribed.forEach((s) => s({ words, type: 'progress' }));
 	}
 
-	Sentence(text: Words) {
-		this.Subscribed.forEach((s) => s(text));
+	Sentence(words: Words) {
+		this.Subscribed.forEach((s) => s({ words, type: 'sentence' }));
 	}
 }

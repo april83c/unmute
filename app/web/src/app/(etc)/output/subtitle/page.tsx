@@ -3,14 +3,51 @@
 import styles from './page.module.css';
 import core from '@/client/core';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { Words } from '@unmute/core';
 
+enum SubtitleContentType {
+	Progress = 0,
+	Sentence = 1
+}
+
+const LENGTH_MULTIPLIER = 1;
+const SUBTITLE_CONTENT_EMPTY = {
+	words: { text: '', redacted: false },
+	ends: 0,
+	type: SubtitleContentType.Progress
+};
+
+type SubtitleContent = {
+	type: SubtitleContentType;
+	words: Words;
+	ends: number;
+};
+
 export default function SubtitleOutput({}: {}) {
-	const [subtitleContent, setSubtitleContent] = useState<Words>({
-		text: '',
-		redacted: false
-	});
+	const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+	const [subtitleContent, _setSubtitleContent] = useState<SubtitleContent>(
+		SUBTITLE_CONTENT_EMPTY
+	);
+
+	function setSubtitleContent(value: SubtitleContent) {
+		_setSubtitleContent((subtitleContent) => {
+			if (
+				value.type == SubtitleContentType.Sentence
+				|| subtitleContent.type == SubtitleContentType.Progress
+				|| Date.now() > subtitleContent.ends
+			) {
+				setTimeout(() => {
+					forceUpdate();
+				}, value.ends - Date.now());
+
+				return value;
+			} else {
+				return subtitleContent;
+			}
+		});
+	}
 
 	const _thingForTypes = core.output({ module: 'subtitle' })({ id: '' }).socket
 		.subscribe;
@@ -50,12 +87,34 @@ export default function SubtitleOutput({}: {}) {
 							if (
 								message.data
 								&& typeof message.data == 'object'
-								&& 'text' in message.data
-								&& typeof message.data.text == 'string'
-								&& 'redacted' in message.data
-								&& typeof message.data.redacted == 'boolean'
+								&& 'type' in message.data
+								&& (message.data.type == 'sentence'
+									|| message.data.type == 'progress')
+								&& 'words' in message.data
+								&& message.data.words
+								&& typeof message.data.words == 'object'
+								&& 'text' in message.data.words
+								&& typeof message.data.words.text == 'string'
+								&& 'redacted' in message.data.words
+								&& typeof message.data.words.redacted == 'boolean'
 							) {
-								setSubtitleContent(message.data as Words);
+								const words = message.data.words as Words;
+
+								const length =
+									message.data.type == 'sentence'
+										? (words.lengthMs ?? words.text.length * 350 + 3000)
+											* LENGTH_MULTIPLIER
+										: 10000;
+
+								const newContent = {
+									words,
+									ends: Date.now() + length,
+									type:
+										message.data.type == 'sentence'
+											? SubtitleContentType.Sentence
+											: SubtitleContentType.Progress
+								};
+								setSubtitleContent(newContent);
 							} else {
 								console.log(
 									'Malformed or unknown socket message received:',
@@ -76,9 +135,13 @@ export default function SubtitleOutput({}: {}) {
 	switch (activeModules.status) {
 		case 'success':
 			if (activeModules.data.data != null) {
-				const text = socket ? subtitleContent.text : 'Disconnected.';
+				const text = socket
+					? Date.now() > subtitleContent.ends
+						? ''
+						: subtitleContent.words.text
+					: 'Disconnected.';
 				const className = socket
-					? subtitleContent.redacted
+					? subtitleContent.words.redacted
 						? styles.redacted
 						: styles.unredacted
 					: styles.unredacted;

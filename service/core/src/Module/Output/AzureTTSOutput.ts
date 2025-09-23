@@ -1,24 +1,40 @@
-import { BaseModule, OutputModule, Words } from '../../types';
+import {
+	BaseModule,
+	InputModule,
+	InputModuleBaseOptionsSchemaTypebox,
+	OutputModule,
+	Words
+} from '../../types';
 import { Static, t } from 'elysia';
-import { WorkerToMainMessage } from './AzureTTSOutputWorkerTypes';
+import {
+	MainToWorkerMessage,
+	WorkerToMainMessage
+} from './AzureTTSOutputWorkerTypes';
+import kernel from '../../kernel';
 
-export const AzureTTSOutputOptionsSchema = t.Object({
-	style: t.String(),
-	voice: t.String(),
-	pitch: t.Optional(t.String()),
-	azure_key: t.String(),
-	azure_region: t.String(),
-	device_index: t.Number(),
-	replacements: t.Array(
-		t.Object({
-			original: t.String(),
-			replacement: t.String()
-		})
-	)
-});
+export const AzureTTSOutputOptionsSchema = t.Composite([
+	t.Object({
+		style: t.String(),
+		voice: t.String(),
+		pitch: t.Optional(t.String()),
+		azure_key: t.String(),
+		azure_region: t.String(),
+		device_index: t.Number(),
+		replacements: t.Array(
+			t.Object({
+				original: t.String(),
+				replacement: t.String()
+			})
+		)
+	}),
+	InputModuleBaseOptionsSchemaTypebox
+]);
 export type AzureTTSOutputOptions = Static<typeof AzureTTSOutputOptionsSchema>;
 
-export class AzureTTSOutput extends BaseModule implements OutputModule {
+export class AzureTTSOutput
+	extends BaseModule
+	implements OutputModule, InputModule
+{
 	static id = 'azure_tts';
 
 	static OptionsSchema = AzureTTSOutputOptionsSchema;
@@ -34,7 +50,8 @@ export class AzureTTSOutput extends BaseModule implements OutputModule {
 			azure_key: '',
 			azure_region: '',
 			device_index: 0,
-			replacements: []
+			replacements: [],
+			target: 'all'
 		}
 	) {
 		super();
@@ -82,6 +99,10 @@ export class AzureTTSOutput extends BaseModule implements OutputModule {
 					});
 					break;
 				}
+				case 'SentenceLength': {
+					kernel.Sentence(ev.data.words, this.Options.target);
+					break;
+				}
 				default: {
 					console.log(
 						'AzureTTSOutput: Unknown message received from worker:',
@@ -94,7 +115,10 @@ export class AzureTTSOutput extends BaseModule implements OutputModule {
 		this.Worker.postMessage({ type: 'Hello' });
 	}
 
-	Progress(text: Words) {}
+	Progress(text: Words) {
+		// Pass through Progress
+		kernel.Progress(text, this.Options.target);
+	}
 
 	private ApplyReplacements(text: string) {
 		let newText = text;
@@ -105,17 +129,21 @@ export class AzureTTSOutput extends BaseModule implements OutputModule {
 				'\\$&'
 			);
 			// Modify the regex to include optional punctuation after the word
-			const regex = new RegExp(`${esc}(?=[.,!?\\s]|$)`, 'ig');
+			const regex = new RegExp(`\b${esc}(?=[.,!?\\s]|$)`, 'ig');
 
 			newText = newText.replaceAll(regex, replacement.replacement);
 		});
 		return newText;
 	}
 
-	async Sentence(text: Words) {
-		const ssml = `<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="${this.Options.voice}">${this.Options.style != 'default' ? `<mstts:express-as style="${this.Options.style}">` : ''}${this.Options.pitch ? `<prosody pitch="${this.Options.pitch}">` : ''}${text.redacted ? 'Redacted.' : this.ApplyReplacements(text.text.replaceAll('.', ','))}${this.Options.pitch ? `</prosody>` : ''}${this.Options.style != 'default' ? `</mstts:express-as>` : ''}</voice></speak>`;
+	async Sentence(words: Words) {
+		const ssml = `<speak xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="http://www.w3.org/2001/mstts" xmlns:emo="http://www.w3.org/2009/10/emotionml" version="1.0" xml:lang="en-US"><voice name="${this.Options.voice}">${this.Options.style != 'default' ? `<mstts:express-as style="${this.Options.style}">` : ''}${this.Options.pitch ? `<prosody pitch="${this.Options.pitch}">` : ''}${words.redacted ? 'Redacted.' : this.ApplyReplacements(words.text.replaceAll('.', ','))}${this.Options.pitch ? `</prosody>` : ''}${this.Options.style != 'default' ? `</mstts:express-as>` : ''}</voice></speak>`;
 		//console.log(ssml);
 
-		this.Worker.postMessage({ type: 'SpeakSsmlToPlayer', ssml });
+		this.Worker.postMessage({
+			type: 'SpeakSsmlToPlayer',
+			ssml,
+			words
+		} as MainToWorkerMessage);
 	}
 }

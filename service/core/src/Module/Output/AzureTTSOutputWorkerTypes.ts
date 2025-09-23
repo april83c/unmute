@@ -1,6 +1,13 @@
-export type WorkerToMainMessage = {
-	type: 'ready';
-};
+import { Words } from '../../types';
+
+export type WorkerToMainMessage =
+	| {
+			type: 'ready';
+	  }
+	| {
+			type: 'SentenceLength';
+			words: Words;
+	  };
 
 export type MainToWorkerMessage =
 	| { type: 'Hello' }
@@ -16,4 +23,5 @@ export type MainToWorkerMessage =
 	| {
 			type: 'SpeakSsmlToPlayer';
 			ssml: string;
+			words: Words;
 	  };

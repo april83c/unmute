@@ -1,8 +1,7 @@
-import { PvSpeaker } from '@picovoice/pvspeaker-node';
+import type { PvSpeaker } from '@picovoice/pvspeaker-node';
 import { Static, t } from 'elysia';
-import { Readable, Writable } from 'node:stream';
 
-export type Words = { text: string; redacted: boolean };
+export type Words = { text: string; redacted: boolean; lengthMs?: number };
 
 export type BaseOptionsSchema = ReturnType<typeof t.Object>;
 export const InputModuleBaseOptionsSchemaTypebox = t.Object({
@@ -32,7 +31,7 @@ export interface OutputModule extends BaseModule {
 	Sentence(text: Words): void;
 }
 
-export abstract class AudioPlayer extends PvSpeaker {}
+export type AudioPlayer = PvSpeaker;
 export abstract class AudioRecorder {}
 
 export type ConfigurationModule = {

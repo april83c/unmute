@@ -73,13 +73,13 @@ export class ApprovalModule
 	}
 
 	Progress(text: Words) {
-		console.log('ApprovalModule: ' + text.text);
+		console.log('ApprovalModule: Progress: ' + text.text);
 
 		kernel.Progress({ text: text.text, redacted: true }, this.Options.target);
 	}
 
 	Sentence(text: Words) {
-		console.log('ApprovalModule: ' + text.text);
+		console.log('ApprovalModule: Sentence: ' + text.text);
 		this.approvalBuffer = text;
 	}
 }

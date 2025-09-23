@@ -10,6 +10,13 @@ console.log('AzureTTSOutputWorker: I exist...');
 let player: PvSpeaker | undefined = undefined;
 let synthesizer: Speech.SpeechSynthesizer | undefined = undefined;
 
+const getPcmDurationMs = (
+	bytes: number,
+	khz: number,
+	bits: number,
+	channels: number
+) => (bytes / (khz * 1000 * (bits / 8) * channels)) * 1000;
+
 self.addEventListener('message', (ev: MessageEvent<MainToWorkerMessage>) => {
 	switch (ev.data.type) {
 		case 'Hello': {
@@ -41,6 +48,7 @@ self.addEventListener('message', (ev: MessageEvent<MainToWorkerMessage>) => {
 			break;
 		}
 		case 'SpeakSsmlToPlayer': {
+			console.log('AzureTTSOutputWorker: SpeakSsmlToPlayer');
 			if (!player || !synthesizer) {
 				console.error(
 					'AzureTTSOutputWorker: Worker received SpeakSsmlToPlayer before InitializePlayer and InitializeSynthesizer were called.',
@@ -49,10 +57,23 @@ self.addEventListener('message', (ev: MessageEvent<MainToWorkerMessage>) => {
 				break;
 			}
 
+			const ssml = ev.data.ssml;
+			const words = ev.data.words;
+
 			synthesizer.speakSsmlAsync(
-				ev.data.ssml,
+				ssml,
 				(result: Speech.SpeechSynthesisResult) => {
 					if (result.reason == Speech.ResultReason.SynthesizingAudioCompleted) {
+						self.postMessage({
+							type: 'SentenceLength',
+							words: {
+								...words,
+								lengthMs:
+									getPcmDurationMs(result.audioData.byteLength, 48, 16, 1)
+									+ 2000
+							}
+						} as WorkerToMainMessage);
+
 						if (!player)
 							console.error(
 								'AzureTTSOutputWorker: The player disappeared from us after running speech synthesis.'

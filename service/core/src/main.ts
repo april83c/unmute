@@ -29,6 +29,24 @@ kernel.Output.push({
 });
 */
 
+const subtitleOutputInstance = new WebSubtitleOutput();
+const subtitleOutput: EnabledModuleInstance<OutputModule> = {
+	ModuleID: subtitleOutputInstance.id,
+	Instance: subtitleOutputInstance,
+	InstanceID: crypto.randomUUID(),
+	Enabled: true
+};
+kernel.Output.push(subtitleOutput);
+
+const logOutputInstance = new LogOutput();
+const logOutput: EnabledModuleInstance<OutputModule> = {
+	ModuleID: logOutputInstance.id,
+	Instance: logOutputInstance,
+	InstanceID: crypto.randomUUID(),
+	Enabled: true
+};
+kernel.Output.push(logOutput);
+
 const azureTTSOutputInstance = new AzureTTSOutput({
 	voice: 'en-US-AshleyNeural',
 	style: 'default',
@@ -95,7 +113,8 @@ const azureTTSOutputInstance = new AzureTTSOutput({
 		{ original: 'bakushinshin', replacement: 'bakshinshin' },
 		{ original: 'ongeki', replacement: 'ongheki' },
 		{ original: 'unc', replacement: 'unck' }
-	]
+	],
+	target: [subtitleOutput.InstanceID, logOutput.InstanceID]
 });
 const azureTTSOutput: EnabledModuleInstance<OutputModule> = {
 	ModuleID: azureTTSOutputInstance.id,
@@ -105,30 +124,8 @@ const azureTTSOutput: EnabledModuleInstance<OutputModule> = {
 };
 kernel.Output.push(azureTTSOutput);
 
-const logOutputInstance = new LogOutput();
-const logOutput: EnabledModuleInstance<OutputModule> = {
-	ModuleID: logOutputInstance.id,
-	Instance: logOutputInstance,
-	InstanceID: crypto.randomUUID(),
-	Enabled: true
-};
-kernel.Output.push(logOutput);
-
-const subtitleOutputInstance = new WebSubtitleOutput();
-const subtitleOutput: EnabledModuleInstance<OutputModule> = {
-	ModuleID: subtitleOutputInstance.id,
-	Instance: subtitleOutputInstance,
-	InstanceID: crypto.randomUUID(),
-	Enabled: true
-};
-kernel.Output.push(subtitleOutput);
-
 const approvalModuleInstance = new ApprovalModule({
-	target: [
-		logOutput.InstanceID,
-		azureTTSOutput.InstanceID,
-		subtitleOutput.InstanceID
-	],
+	target: [azureTTSOutput.InstanceID],
 	rejectKey: 'X',
 	approveKey: 'Z'
 });
@@ -142,11 +139,7 @@ kernel.Input.push(approvalModule);
 kernel.Output.push(approvalModule);
 
 const webKeysInput = new WebKeysInput({
-	target: [
-		logOutput.InstanceID,
-		azureTTSOutput.InstanceID,
-		subtitleOutput.InstanceID
-	]
+	target: [azureTTSOutput.InstanceID]
 });
 kernel.Input.push({
 	ModuleID: webKeysInput.id,
@@ -156,7 +149,7 @@ kernel.Input.push({
 });
 
 const webSpeechInput = new WebSpeechInput({
-	target: [approvalModule.InstanceID]
+	target: [azureTTSOutput.InstanceID] //[approvalModule.InstanceID]
 });
 kernel.Input.push({
 	ModuleID: webSpeechInput.id,
